@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use Squeak in your research, please cite it as below."
+title: "Squeak: a desktop app for manual scoring of rodent object exploration"
+abstract: >
+  Squeak is an open-source, cross-platform desktop application for manual
+  scoring of rodent behavioral assays involving object exploration, including
+  the Novel Object Recognition task and Y-maze object exploration. It supports
+  live webcam input, video file playback, and configurable hotkey-based
+  scoring of an arbitrary number of objects, and produces per-trial CSV
+  outputs and aggregated session sheets, including the Discrimination Index.
+type: software
+version: "1.0.0"
+date-released: "2026-05-15"
+license: MIT
+authors:
+  - family-names: "Abouelnaga"
+    given-names: "Karim"
+keywords:
+  - behavioral neuroscience
+  - rodent behavior
+  - novel object recognition
+  - Y-maze
+  - discrimination index
+  - manual scoring
+  - open source
+repository-code: ""   # add GitHub URL once published
+url: ""               # add project URL if applicable

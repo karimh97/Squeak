@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# PyInstaller output
+build/
+dist/
+
+# Generated icon source (icon.icns and icon.png are tracked; the iconset is intermediate)
+build_assets/Squeak.iconset/
+
+# Per-user trial output — never commit research data
+data/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# macOS
+.DS_Store
+
+# Claude Code state
+.claude/
