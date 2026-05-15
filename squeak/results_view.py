@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .branding import logo_pixmap
 from .exporter import append_to_master, export_trial
 from .scorer import Scorer
 from .style import ACCENT, SUCCESS, DANGER
@@ -69,9 +70,16 @@ class ResultsView(QWidget):
 
         # --- Brand + title ---
         brand_row = QHBoxLayout(); brand_row.setSpacing(0)
-        brand = QLabel("Squeak"); brand.setStyleSheet("font-size: 15px; font-weight: 700;")
-        dot = QLabel("."); dot.setStyleSheet(f"color: {ACCENT}; font-size: 15px; font-weight: 700;")
-        brand_row.addWidget(brand); brand_row.addWidget(dot); brand_row.addStretch(1)
+        logo_px = logo_pixmap(height=28, on_dark=True)
+        if logo_px is not None:
+            logo_lbl = QLabel()
+            logo_lbl.setPixmap(logo_px)
+            brand_row.addWidget(logo_lbl)
+        else:
+            brand = QLabel("Squeak"); brand.setStyleSheet("font-size: 15px; font-weight: 700;")
+            dot = QLabel("."); dot.setStyleSheet(f"color: {ACCENT}; font-size: 15px; font-weight: 700;")
+            brand_row.addWidget(brand); brand_row.addWidget(dot)
+        brand_row.addStretch(1)
         root.addLayout(brand_row)
 
         title_block = QVBoxLayout(); title_block.setSpacing(4)

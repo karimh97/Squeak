@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="build_assets/squeak_logo.png" alt="Squeak" width="420">
+</p>
+
 # Squeak
 
 A modern, open-source desktop app for **manual scoring of rodent object exploration** — Novel Object Recognition (NOR), Y-maze object exploration, and related paradigms.

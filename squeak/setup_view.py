@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from .branding import logo_pixmap
 from .scorer import ObjectConfig
 
 
@@ -277,13 +278,19 @@ class SetupView(QWidget):
         root.setContentsMargins(40, 36, 40, 32)
         root.setSpacing(22)
 
-        # --- Brand header ---
+        # --- Brand header (image logo if available, falls back to text) ---
         brand_row = QHBoxLayout()
         brand_row.setSpacing(0)
-        brand = QLabel("Squeak"); brand.setObjectName("Brand")
-        dot = QLabel("."); dot.setObjectName("BrandDot")
-        brand_row.addWidget(brand)
-        brand_row.addWidget(dot)
+        logo_px = logo_pixmap(height=84, on_dark=True)
+        if logo_px is not None:
+            logo_lbl = QLabel()
+            logo_lbl.setPixmap(logo_px)
+            brand_row.addWidget(logo_lbl)
+        else:
+            brand = QLabel("Squeak"); brand.setObjectName("Brand")
+            dot = QLabel("."); dot.setObjectName("BrandDot")
+            brand_row.addWidget(brand)
+            brand_row.addWidget(dot)
         brand_row.addStretch(1)
         root.addLayout(brand_row)
 
