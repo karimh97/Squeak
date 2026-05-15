@@ -6,8 +6,10 @@ from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtMultimedia import QMediaDevices
 from PySide6.QtWidgets import (
     QCheckBox,
+    QComboBox,
     QFileDialog,
     QFormLayout,
     QFrame,
@@ -24,6 +26,132 @@ from PySide6.QtWidgets import (
 )
 
 from .scorer import ObjectConfig
+
+
+class CameraSelector(QWidget):
+    """Pick a camera by detected name, or fall back to a manual index.
+
+    Uses QMediaDevices to list connected cameras with friendly names
+    ('FaceTime HD Camera', 'Logitech C920', …) and listens for plug /
+    unplug events to refresh the list automatically.
+
+    The index returned by `value()` is the position in the live device
+    list, which (on the platforms Qt supports) matches the index
+    OpenCV's VideoCapture uses on the same backend. The "Use index"
+    toggle is an escape hatch when that mapping is wrong.
+    """
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self._media = QMediaDevices(self)
+        self._media.videoInputsChanged.connect(self._refresh)
+
+        self.combo = QComboBox()
+        self.combo.setMinimumWidth(220)
+
+        self.spin = QSpinBox()
+        self.spin.setRange(0, 10)
+        self.spin.setFixedWidth(80)
+        self.spin.setSuffix("")
+        self.spin.hide()
+
+        self.toggle = QPushButton("Use index")
+        self.toggle.setObjectName("Ghost")
+        self.toggle.setCursor(Qt.PointingHandCursor)
+        self.toggle.setToolTip("Switch to manual camera index if the dropdown doesn't show what you want.")
+        self.toggle.clicked.connect(self._toggle_mode)
+
+        self.hint = QLabel("")
+        self.hint.setObjectName("Subtle")
+        self.hint.setWordWrap(True)
+        self.hint.hide()
+
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(8)
+        row.addWidget(self.combo, 1)
+        row.addWidget(self.spin, 0)
+        row.addWidget(self.toggle, 0)
+
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.setSpacing(4)
+        outer.addLayout(row)
+        outer.addWidget(self.hint)
+
+        self._manual = False
+        self._refresh()
+
+    # --- public API ---------------------------------------------------
+
+    def value(self) -> int:
+        """Return the cv2.VideoCapture index to open."""
+        if self._manual:
+            return int(self.spin.value())
+        idx = self.combo.currentData()
+        return int(idx) if idx is not None else 0
+
+    def display_name(self) -> str:
+        if self._manual:
+            return f"Camera {self.spin.value()}"
+        return self.combo.currentText() or "Camera 0"
+
+    def is_manual(self) -> bool:
+        return self._manual
+
+    def set_state(self, manual: bool, index: int, name: str = "") -> None:
+        self._set_manual(manual)
+        if manual:
+            self.spin.setValue(max(0, min(10, int(index))))
+            return
+        # Try to restore by name first, then fall back to index
+        if name:
+            i = self.combo.findText(name)
+            if i >= 0:
+                self.combo.setCurrentIndex(i)
+                return
+        if 0 <= index < self.combo.count():
+            self.combo.setCurrentIndex(index)
+
+    # --- internals ----------------------------------------------------
+
+    def _refresh(self) -> None:
+        previous = self.combo.currentText()
+        self.combo.clear()
+        devices = QMediaDevices.videoInputs()
+        if not devices:
+            self.combo.addItem("No cameras detected", -1)
+            self.combo.setEnabled(False)
+            self.hint.setText(
+                "No cameras detected. If you have one plugged in, "
+                "check Camera access in System Settings → Privacy & Security."
+            )
+            self.hint.show()
+        else:
+            self.combo.setEnabled(True)
+            for i, dev in enumerate(devices):
+                self.combo.addItem(dev.description(), i)
+            self.hint.hide()
+            if previous:
+                i = self.combo.findText(previous)
+                if i >= 0:
+                    self.combo.setCurrentIndex(i)
+
+    def _toggle_mode(self) -> None:
+        self._set_manual(not self._manual)
+
+    def _set_manual(self, manual: bool) -> None:
+        self._manual = manual
+        self.combo.setVisible(not manual)
+        self.spin.setVisible(manual)
+        self.toggle.setText("Use detected camera" if manual else "Use index")
+        if manual:
+            self.hint.hide()
+        else:
+            # Re-show hint only if we still have no devices
+            if self.combo.count() == 1 and self.combo.itemData(0) == -1:
+                self.hint.show()
 
 
 PRESETS = {
@@ -245,10 +373,10 @@ class SetupView(QWidget):
         self.radio_file.toggled.connect(self._update_video_inputs)
 
         cam_row = QHBoxLayout()
-        cam_lbl = QLabel("Camera index"); cam_lbl.setObjectName("FieldLabel")
+        cam_lbl = QLabel("Camera"); cam_lbl.setObjectName("FieldLabel")
         cam_row.addSpacing(24); cam_row.addWidget(cam_lbl)
-        self.cam_index = QSpinBox(); self.cam_index.setRange(0, 10); self.cam_index.setFixedWidth(80)
-        cam_row.addWidget(self.cam_index); cam_row.addStretch(1)
+        self.cam_selector = CameraSelector()
+        cam_row.addWidget(self.cam_selector, 1)
 
         file_row = QHBoxLayout()
         file_row.addSpacing(24)
@@ -364,7 +492,7 @@ class SetupView(QWidget):
     def _update_video_inputs(self) -> None:
         on_cam = self.radio_webcam.isChecked()
         on_file = self.radio_file.isChecked()
-        self.cam_index.setEnabled(on_cam)
+        self.cam_selector.setEnabled(on_cam)
         self.file_path_edit.setEnabled(on_file)
 
     def _browse_video(self) -> None:
@@ -395,7 +523,9 @@ class SetupView(QWidget):
             "open_ended": self.open_ended_check.isChecked(),
             "video_kind": ("webcam" if self.radio_webcam.isChecked()
                            else "file" if self.radio_file.isChecked() else "none"),
-            "cam_index": self.cam_index.value(),
+            "cam_mode": "index" if self.cam_selector.is_manual() else "named",
+            "cam_index": self.cam_selector.value(),
+            "cam_name": "" if self.cam_selector.is_manual() else self.cam_selector.display_name(),
             "file_path": self.file_path_edit.text(),
             "objects": [(o.name, o.hotkey) for o in self._collect_objects()],
         }
@@ -426,7 +556,11 @@ class SetupView(QWidget):
         if vk == "file": self.radio_file.setChecked(True)
         elif vk == "none": self.radio_none.setChecked(True)
         else: self.radio_webcam.setChecked(True)
-        self.cam_index.setValue(int(data.get("cam_index", 0)))
+        self.cam_selector.set_state(
+            manual=(data.get("cam_mode") == "index"),
+            index=int(data.get("cam_index", 0)),
+            name=data.get("cam_name", ""),
+        )
         self.file_path_edit.setText(data.get("file_path", ""))
         objs = data.get("objects")
         if objs:
@@ -447,7 +581,7 @@ class SetupView(QWidget):
             return
 
         if self.radio_webcam.isChecked():
-            source = int(self.cam_index.value())
+            source = self.cam_selector.value()
         elif self.radio_file.isChecked():
             p = self.file_path_edit.text().strip()
             if not p:
