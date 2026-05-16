@@ -35,7 +35,7 @@ from PySide6.QtWidgets import (
 from .branding import logo_pixmap
 from .scorer import Scorer
 from .setup_view import TrialConfig
-from .style import ACCENT, DANGER, INFO, TEXT_2, WARNING
+from .theme import manager as theme_manager
 from .video_source import VideoSource
 
 
@@ -66,14 +66,16 @@ def _grid_cols(n: int) -> int:
 # ---------------------------------------------------------------------- widgets
 
 class StatusDot(QWidget):
-    """8px circle, pulses when recording, colored by state."""
+    """8px circle, pulses when recording, colored by state. Theme-aware."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedSize(12, 12)
-        self._color = QColor(TEXT_2)
+        self._state = "ready"
+        self._color = self._color_for("ready")
         self._alpha = 1.0
         self._pulse: Optional[QPropertyAnimation] = None
+        theme_manager().changed.connect(lambda _name: self.set_state(self._state))
 
     def _get_alpha(self) -> float: return self._alpha
     def _set_alpha(self, v: float) -> None:
@@ -81,14 +83,18 @@ class StatusDot(QWidget):
         self.update()
     alpha = Property(float, _get_alpha, _set_alpha)
 
+    def _color_for(self, state: str) -> QColor:
+        p = theme_manager().palette()
+        return QColor({
+            "ready":     p.text_2,
+            "recording": p.danger,
+            "paused":    p.warning,
+            "done":      p.info,
+        }.get(state, p.text_2))
+
     def set_state(self, state: str) -> None:
-        colors = {
-            "ready":     QColor(TEXT_2),
-            "recording": QColor(DANGER),
-            "paused":    QColor(WARNING),
-            "done":      QColor(INFO),
-        }
-        self._color = colors.get(state, QColor(TEXT_2))
+        self._state = state
+        self._color = self._color_for(state)
         if state == "recording":
             self._start_pulse()
         else:
@@ -163,16 +169,13 @@ class ObjectCard(QFrame):
 
 
 class VideoLabel(QLabel):
-    """Scales its pixmap to fit, preserving aspect ratio."""
+    """Scales its pixmap to fit, preserving aspect ratio. Theme-aware via QSS."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setObjectName("VideoLabel")
         self.setAlignment(Qt.AlignCenter)
         self.setMinimumSize(480, 320)
-        self.setStyleSheet(
-            "background-color: #05070A; border-radius: 14px; "
-            "border: 1px solid #1A1D26; color: #6B7280;"
-        )
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self._src: Optional[QPixmap] = None
 
@@ -246,17 +249,9 @@ class ScoringView(QWidget):
         header.setContentsMargins(0, 0, 0, 0)
         header.setSpacing(14)
 
-        brand_row = QHBoxLayout(); brand_row.setSpacing(0)
-        logo_px = logo_pixmap(height=28, on_dark=True)
-        if logo_px is not None:
-            logo_lbl = QLabel()
-            logo_lbl.setPixmap(logo_px)
-            brand_row.addWidget(logo_lbl)
-        else:
-            brand = QLabel("Squeak"); brand.setStyleSheet("font-size: 15px; font-weight: 700;")
-            dot = QLabel("."); dot.setStyleSheet(f"color: {ACCENT}; font-size: 15px; font-weight: 700;")
-            brand_row.addWidget(brand); brand_row.addWidget(dot)
-        header.addLayout(brand_row)
+        self.logo_lbl = QLabel()
+        self._refresh_logo()
+        header.addWidget(self.logo_lbl)
         header.addSpacing(20)
 
         title_block = QVBoxLayout(); title_block.setSpacing(2)
@@ -273,12 +268,32 @@ class ScoringView(QWidget):
         status_box.addWidget(self.status_dot)
         status_box.addWidget(self.status_text)
         header.addLayout(status_box)
-        header.addSpacing(12)
+        header.addSpacing(8)
+
+        self.theme_btn = QPushButton(); self.theme_btn.setObjectName("ThemeToggle")
+        self._refresh_theme_btn()
+        self.theme_btn.setCursor(Qt.PointingHandCursor)
+        self.theme_btn.clicked.connect(lambda: theme_manager().toggle())
+        header.addWidget(self.theme_btn)
 
         self.exit_btn = QPushButton("Back"); self.exit_btn.setObjectName("Ghost")
         self.exit_btn.clicked.connect(self._on_exit)
         header.addWidget(self.exit_btn)
+
+        theme_manager().changed.connect(lambda _name: (self._refresh_logo(), self._refresh_theme_btn()))
         return w
+
+    def _refresh_logo(self) -> None:
+        px = logo_pixmap(height=28)
+        if px is not None:
+            self.logo_lbl.setPixmap(px)
+
+    def _refresh_theme_btn(self) -> None:
+        # Show the target mode the user will switch to
+        self.theme_btn.setText("☀" if theme_manager().is_dark() else "🌙")
+        self.theme_btn.setToolTip(
+            f"Switch to {'light' if theme_manager().is_dark() else 'dark'} mode"
+        )
 
     def _build_log(self) -> QFrame:
         card = QFrame(); card.setObjectName("Card")

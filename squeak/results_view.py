@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
@@ -23,7 +22,7 @@ from PySide6.QtWidgets import (
 from .branding import logo_pixmap
 from .exporter import append_to_master, export_trial
 from .scorer import Scorer
-from .style import ACCENT, SUCCESS, DANGER
+from .theme import manager as theme_manager
 
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -61,7 +60,33 @@ class ResultsView(QWidget):
         super().__init__(parent)
         self.scorer: Optional[Scorer] = None
         self.meta: dict = {}
+        self._di_value: Optional[float] = None
         self._build_ui()
+
+    # ------------------------------------------------------------------
+    # Branding / theme helpers
+    # ------------------------------------------------------------------
+    def _refresh_logo(self) -> None:
+        px = logo_pixmap(height=28)
+        if px is not None:
+            self.logo_lbl.setPixmap(px)
+
+    def _refresh_theme_btn(self) -> None:
+        self.theme_btn.setText("☀" if theme_manager().is_dark() else "🌙")
+        self.theme_btn.setToolTip(
+            f"Switch to {'light' if theme_manager().is_dark() else 'dark'} mode"
+        )
+
+    def _refresh_di_color(self) -> None:
+        p = theme_manager().palette()
+        if self._di_value is None:
+            self.kpi_di.value_lbl.setStyleSheet("")
+            return
+        di = self._di_value
+        color = p.success if di > 0.05 else p.danger if di < -0.05 else p.text_2
+        self.kpi_di.value_lbl.setStyleSheet(
+            f"color: {color}; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;"
+        )
 
     def _build_ui(self) -> None:
         root = QVBoxLayout(self)
@@ -70,17 +95,20 @@ class ResultsView(QWidget):
 
         # --- Brand + title ---
         brand_row = QHBoxLayout(); brand_row.setSpacing(0)
-        logo_px = logo_pixmap(height=28, on_dark=True)
-        if logo_px is not None:
-            logo_lbl = QLabel()
-            logo_lbl.setPixmap(logo_px)
-            brand_row.addWidget(logo_lbl)
-        else:
-            brand = QLabel("Squeak"); brand.setStyleSheet("font-size: 15px; font-weight: 700;")
-            dot = QLabel("."); dot.setStyleSheet(f"color: {ACCENT}; font-size: 15px; font-weight: 700;")
-            brand_row.addWidget(brand); brand_row.addWidget(dot)
+        self.logo_lbl = QLabel()
+        self._refresh_logo()
+        brand_row.addWidget(self.logo_lbl)
         brand_row.addStretch(1)
+        self.theme_btn = QPushButton(); self.theme_btn.setObjectName("ThemeToggle")
+        self.theme_btn.setCursor(Qt.PointingHandCursor)
+        self.theme_btn.clicked.connect(lambda: theme_manager().toggle())
+        self._refresh_theme_btn()
+        brand_row.addWidget(self.theme_btn)
         root.addLayout(brand_row)
+
+        theme_manager().changed.connect(
+            lambda _name: (self._refresh_logo(), self._refresh_theme_btn(), self._refresh_di_color())
+        )
 
         title_block = QVBoxLayout(); title_block.setSpacing(4)
         self.title = QLabel("Trial complete"); self.title.setObjectName("H1")
@@ -155,18 +183,16 @@ class ResultsView(QWidget):
 
         self.kpi_duration.value_lbl.setText(_fmt_clock(scorer.now()))
         self.kpi_total.value_lbl.setText(f"{total:.2f} s")
+        self._di_value: float | None = None
         if len(stats) == 2 and total > 0:
             a, b = stats
-            di = (b.total_time - a.total_time) / total
-            self.kpi_di.value_lbl.setText(f"{di:+.3f}")
-            # Color the DI: green if positive (preference for B), red if negative
-            color = SUCCESS if di > 0.05 else DANGER if di < -0.05 else "#9CA3AF"
-            self.kpi_di.value_lbl.setStyleSheet(f"color: {color}; font-size: 32px; font-weight: 700; letter-spacing: -0.5px;")
+            self._di_value = (b.total_time - a.total_time) / total
+            self.kpi_di.value_lbl.setText(f"{self._di_value:+.3f}")
             self.kpi_di.caption_lbl.setText(f"DI = ({b.name.upper()} − {a.name.upper()}) / TOTAL")
         else:
             self.kpi_di.value_lbl.setText("—")
-            self.kpi_di.value_lbl.setStyleSheet("")
             self.kpi_di.caption_lbl.setText("DI (REQUIRES EXACTLY 2 OBJECTS)")
+        self._refresh_di_color()
 
         self.table.setRowCount(0)
         for s in stats:

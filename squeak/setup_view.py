@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 
 from .branding import logo_pixmap
 from .scorer import ObjectConfig
+from .theme import manager as theme_manager
 
 
 class CameraSelector(QWidget):
@@ -278,21 +279,23 @@ class SetupView(QWidget):
         root.setContentsMargins(40, 36, 40, 32)
         root.setSpacing(22)
 
-        # --- Brand header (image logo if available, falls back to text) ---
+        # --- Brand header (logo image + theme toggle) ---
         brand_row = QHBoxLayout()
         brand_row.setSpacing(0)
-        logo_px = logo_pixmap(height=84, on_dark=True)
-        if logo_px is not None:
-            logo_lbl = QLabel()
-            logo_lbl.setPixmap(logo_px)
-            brand_row.addWidget(logo_lbl)
-        else:
-            brand = QLabel("Squeak"); brand.setObjectName("Brand")
-            dot = QLabel("."); dot.setObjectName("BrandDot")
-            brand_row.addWidget(brand)
-            brand_row.addWidget(dot)
+        self.logo_lbl = QLabel()
+        self._refresh_logo()
+        brand_row.addWidget(self.logo_lbl)
         brand_row.addStretch(1)
+        self.theme_btn = QPushButton(); self.theme_btn.setObjectName("ThemeToggle")
+        self.theme_btn.setCursor(Qt.PointingHandCursor)
+        self.theme_btn.clicked.connect(lambda: theme_manager().toggle())
+        self._refresh_theme_btn()
+        brand_row.addWidget(self.theme_btn)
         root.addLayout(brand_row)
+
+        theme_manager().changed.connect(
+            lambda _name: (self._refresh_logo(), self._refresh_theme_btn())
+        )
 
         subtitle = QLabel("Manual scoring for rodent object exploration")
         subtitle.setObjectName("Subtle")
@@ -439,6 +442,20 @@ class SetupView(QWidget):
         self._add_object_row("Object A", "1")
         self._add_object_row("Object B", "2")
         self._mark_chip("Custom")
+
+    # ------------------------------------------------------------------
+    # Branding / theme
+    # ------------------------------------------------------------------
+    def _refresh_logo(self) -> None:
+        px = logo_pixmap(height=84)
+        if px is not None:
+            self.logo_lbl.setPixmap(px)
+
+    def _refresh_theme_btn(self) -> None:
+        self.theme_btn.setText("☀" if theme_manager().is_dark() else "🌙")
+        self.theme_btn.setToolTip(
+            f"Switch to {'light' if theme_manager().is_dark() else 'dark'} mode"
+        )
 
     # ------------------------------------------------------------------
     # Template chips
