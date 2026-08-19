@@ -18,6 +18,8 @@ class VideoSource(QObject):
         self.cap: cv2.VideoCapture | None = None
         self.timer = QTimer(self)
         self.timer.timeout.connect(self._read_frame)
+        self._interval_ms = 33
+        self._paused = False
 
     def start(self, fallback_fps: float = 30.0) -> bool:
         if self.source is None:
@@ -31,12 +33,28 @@ class VideoSource(QObject):
             fps = self.cap.get(cv2.CAP_PROP_FPS) or fallback_fps
         else:
             fps = fallback_fps
-        interval = max(10, int(1000 / fps))
-        self.timer.start(interval)
+        self._interval_ms = max(10, int(1000 / fps))
+        self._paused = False
+        self.timer.start(self._interval_ms)
         return True
+
+    def pause(self) -> None:
+        """Pause file playback without losing the current frame position."""
+        if not self.is_file or self.cap is None or self._paused:
+            return
+        self.timer.stop()
+        self._paused = True
+
+    def resume(self) -> None:
+        """Resume file playback from the frame where it was paused."""
+        if not self.is_file or self.cap is None or not self._paused:
+            return
+        self._paused = False
+        self.timer.start(self._interval_ms)
 
     def stop(self) -> None:
         self.timer.stop()
+        self._paused = False
         if self.cap is not None:
             self.cap.release()
             self.cap = None

@@ -471,7 +471,10 @@ class ScoringView(QWidget):
             self.video.frame_ready.connect(self.video_label.set_image)
             self.video.error.connect(self._on_video_error)
             self.video.ended.connect(lambda: self.video_label.set_placeholder("Video ended"))
-            if not self.video.start():
+            if self.video.is_file:
+                # A recording must stay at frame zero until the scoring clock starts.
+                self.video_label.set_placeholder("Video ready — press Start")
+            elif not self.video.start():
                 self.video_label.set_placeholder("Could not open video source")
 
         # Reset controls
@@ -500,6 +503,9 @@ class ScoringView(QWidget):
     # ------------------------------------------------------------------
     def _on_start_clicked(self) -> None:
         if self.scorer is None: return
+        if self.video is not None and self.video.is_file and self.video.cap is None:
+            if not self.video.start() and self.video_label is not None:
+                self.video_label.set_placeholder("Could not open video source")
         self.scorer.start()
         self.tick_timer.start()
         self.start_btn.setEnabled(False)
@@ -513,11 +519,15 @@ class ScoringView(QWidget):
             return
         if self.scorer.is_paused():
             self.scorer.resume()
+            if self.video is not None:
+                self.video.resume()
             self.pause_btn.setText("Pause")
             self._set_status("recording", "RECORDING")
             self._append_log(self.scorer.now(), "trial", "resume")
         else:
             self.scorer.pause()
+            if self.video is not None:
+                self.video.pause()
             self.pause_btn.setText("Resume")
             self._set_status("paused", "PAUSED")
             self._append_log(self.scorer.now(), "trial", "pause")

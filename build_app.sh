@@ -33,6 +33,17 @@ rm -rf build dist
 echo "==> Running PyInstaller"
 .venv/bin/python -m PyInstaller squeak.spec --noconfirm --clean
 
+if [[ "$OSTYPE" == "darwin"* ]] && [ -d "dist/Squeak.app" ]; then
+    echo "==> Cleaning bundle metadata and applying an ad-hoc signature"
+    if xattr -cr dist/Squeak.app 2>/dev/null \
+        && codesign --force --deep --sign - dist/Squeak.app; then
+        echo "==> Ad-hoc signature applied"
+    else
+        echo "==> Warning: the app was built, but macOS could not apply an ad-hoc signature." >&2
+        echo "    This can happen in cloud-synced folders. Move the project to a local folder and rebuild." >&2
+    fi
+fi
+
 echo ""
 echo "✓ Build complete."
 if [ -d "dist/Squeak.app" ]; then

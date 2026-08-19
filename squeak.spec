@@ -16,6 +16,9 @@ a = Analysis(
     datas=[
         ("build_assets/icon.png", "build_assets"),
         ("build_assets/icon.icns", "build_assets"),
+        ("build_assets/squeak_logo.png", "build_assets"),
+        ("build_assets/squeak_logo_black.png", "build_assets"),
+        ("build_assets/squeak_logo_white.png", "build_assets"),
     ],
     hiddenimports=[],
     hookspath=[],

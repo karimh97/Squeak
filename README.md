@@ -8,6 +8,12 @@ A modern, open-source desktop app for **manual scoring of rodent object explorat
 
 Toggle a hotkey when the animal starts exploring an object; press it again when it stops. Squeak handles per-object timers, bouts, the Discrimination Index, and CSV export for downstream analysis.
 
+Squeak grew from direct experience with behavioural-neuroscience experiments: manual scoring needed to be flexible enough for different trial phases and object configurations, while still producing consistent, analysis-ready records. It turns that lab workflow into a reusable tool that other researchers can run without writing code.
+
+<p align="center">
+  <img src="docs/squeak-scoring.png" alt="Squeak live scoring screen with trial clock, object timers, bout counts, controls, and event log" width="100%">
+</p>
+
 ---
 
 ## Features
@@ -20,6 +26,7 @@ Toggle a hotkey when the animal starts exploring an object; press it again when 
 - **Discrimination Index** computed live when exactly two objects are configured.
 - **CSV outputs**: a detailed per-trial file (metadata + summary + DI + full event log with timestamps) and an append-only session master sheet.
 - **Configuration persists** across launches.
+- **Playback stays synchronized** — pre-recorded video starts with the scoring clock and pauses or resumes with the trial.
 
 ---
 
@@ -50,11 +57,25 @@ The build script handles everything: virtual environment, dependencies, icon gen
 - macOS 11+, Windows 10+, or Linux with a desktop environment
 - A USB webcam (optional — Squeak also works with pre-recorded video or no video at all)
 
+### Verify the installation
+
+Run the automated tests after setup:
+
+```bash
+.venv/bin/python -m unittest discover -s tests -v
+```
+
+The test suite covers scoring state transitions, pause-adjusted timing, automatic trial completion, CSV export, master-sheet expansion, and synchronized file-video playback.
+
 ---
 
 ## Using the app
 
 **1. Setup.** Pick a template or fill in the form. Add or remove objects on the right; each row is a label and a one-character hotkey.
+
+<p align="center">
+  <img src="docs/squeak-setup.png" alt="Squeak trial setup screen with templates, study metadata, video source, duration, and objects" width="100%">
+</p>
 
 **2. Scoring.** Press **Start**. While the animal explores an object, press that object's hotkey — the card lights up and the timer runs. Press it again when the animal disengages. **Space** pauses; **Stop** ends the trial (the trial also auto-stops when the configured duration is reached).
 
