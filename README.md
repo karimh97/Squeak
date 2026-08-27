@@ -145,7 +145,17 @@ DI = (Object_B − Object_A) / (Object_B + Object_A)
 
 ## Citation
 
-If you use Squeak in a publication, please cite it. A `CITATION.cff` file is included; most journals and tools (GitHub, Zenodo, Zotero) read it automatically.
+If you use Squeak in your research, analysis, presentation, or publication,
+please cite Squeak and its author, **Karim Abouelnaga**:
+
+> Abouelnaga, K. (2026). *Squeak: A desktop app for manual scoring of rodent
+> object exploration* (Version 1.0.0) [Computer software]. GitHub.
+> https://github.com/karimh97/Squeak
+
+The repository also includes [`CITATION.cff`](CITATION.cff), which powers
+GitHub's **Cite this repository** button and can be imported by citation tools.
+The citation will be updated with a permanent DOI after the first archived
+release.
 
 ---
 

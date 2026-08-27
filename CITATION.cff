@@ -1,5 +1,7 @@
 cff-version: 1.2.0
-message: "If you use Squeak in your research, please cite it as below."
+message: >
+  If you use Squeak in your research, analysis, presentation, or publication,
+  please cite Squeak and its author, Karim Abouelnaga, using the citation below.
 title: "Squeak: a desktop app for manual scoring of rodent object exploration"
 abstract: >
   Squeak is an open-source, cross-platform desktop application for manual
