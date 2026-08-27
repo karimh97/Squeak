@@ -12,6 +12,7 @@ env/
 # PyInstaller output
 build/
 dist/
+.pyinstaller/
 
 # Generated icon source (icon.icns and icon.png are tracked; the iconset is intermediate)
 build_assets/Squeak.iconset/

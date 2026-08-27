@@ -32,6 +32,13 @@ Squeak grew from direct experience with behavioural-neuroscience experiments: ma
 
 ## Quick start
 
+### For lab members — download the app
+
+Lab members should download the appropriate package from the repository's
+**Releases** page. They do not need Python and should not clone the source code.
+See [LAB_DISTRIBUTION.md](LAB_DISTRIBUTION.md) for installation instructions,
+security-warning guidance, and the maintainer release process.
+
 ### Option A — run from source (development)
 
 ```bash
@@ -85,7 +92,7 @@ The test suite covers scoring state transitions, pause-adjusted timing, automati
 
 ## Outputs
 
-By default everything saves to `data/` next to the app. Two files per session:
+By default everything saves to `Documents/Squeak Data`. Two files per session:
 
 **Per-trial CSV** (`M001_Test_20260515_161716.csv`):
 
@@ -129,7 +136,7 @@ DI = (Object_B − Object_A) / (Object_B + Object_A)
 │   ├── icon.py             # app icon generator
 │   └── style.py            # theme (QSS + palette constants)
 ├── build_assets/           # generated PNG / .icns
-├── data/                   # default CSV output location
+├── data/                   # ignored local development output
 ├── LICENSE                 # MIT
 └── CITATION.cff
 ```

@@ -1,6 +1,7 @@
 """Loaders for the Squeak brand assets (wordmark + mouse logo)."""
 
 from pathlib import Path
+import sys
 from typing import Optional
 
 from PySide6.QtCore import Qt
@@ -8,7 +9,8 @@ from PySide6.QtGui import QPixmap
 
 from .theme import manager as theme_manager
 
-_ASSETS = Path(__file__).resolve().parent.parent / "build_assets"
+_ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
+_ASSETS = _ROOT / "build_assets"
 
 # Three variants of the same artwork:
 #   *_white.png — white on transparent, for the dark UI

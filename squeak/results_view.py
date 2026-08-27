@@ -25,7 +25,7 @@ from .scorer import Scorer
 from .theme import manager as theme_manager
 
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+DATA_DIR = Path.home() / "Documents" / "Squeak Data"
 
 
 def _fmt_clock(secs: float) -> str:

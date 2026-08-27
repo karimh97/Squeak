@@ -19,19 +19,12 @@ fi
 echo "==> Installing PyInstaller (if needed)"
 .venv/bin/python -m pip install --quiet pyinstaller
 
-echo "==> Generating icon assets"
-.venv/bin/python -m squeak.icon
-
-if [[ "$OSTYPE" == "darwin"* ]] && command -v iconutil >/dev/null 2>&1; then
-    echo "==> Building .icns (macOS)"
-    iconutil -c icns build_assets/Squeak.iconset -o build_assets/icon.icns
-fi
-
 echo "==> Cleaning previous build"
 rm -rf build dist
 
 echo "==> Running PyInstaller"
-.venv/bin/python -m PyInstaller squeak.spec --noconfirm --clean
+PYINSTALLER_CONFIG_DIR="$PWD/.pyinstaller" \
+    .venv/bin/python -m PyInstaller squeak.spec --noconfirm --clean
 
 if [[ "$OSTYPE" == "darwin"* ]] && [ -d "dist/Squeak.app" ]; then
     echo "==> Cleaning bundle metadata and applying an ad-hoc signature"

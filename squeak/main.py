@@ -21,7 +21,7 @@ def main() -> int:
     # Apply whichever theme the user last picked (defaults to dark).
     theme_manager().apply()
 
-    repo_root = Path(__file__).resolve().parent.parent
+    repo_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
     icns = repo_root / "build_assets" / "icon.icns"
     png  = repo_root / "build_assets" / "icon.png"
     if icns.exists():
