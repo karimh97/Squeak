@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
@@ -133,6 +134,8 @@ class ObjectCard(QFrame):
         self.setObjectName("ObjectCard")
         self.setProperty("active", "false")
         self.name = name
+        self.setMinimumHeight(142 if large else 104)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
 
         lay = QVBoxLayout(self)
         if large:
@@ -218,6 +221,8 @@ class ScoringView(QWidget):
         self.clock_lbl: Optional[QLabel] = None
         self.clock_caption: Optional[QLabel] = None
         self.objects_container = None       # QVBoxLayout or QGridLayout
+        self.objects_scroll: Optional[QScrollArea] = None
+        self.clock_card_layout: Optional[QVBoxLayout] = None
         self.start_btn: Optional[QPushButton] = None
         self.pause_btn: Optional[QPushButton] = None
         self.stop_btn: Optional[QPushButton] = None
@@ -301,7 +306,7 @@ class ScoringView(QWidget):
         cap = QLabel("EVENT LOG"); cap.setObjectName("Caption")
         self.log_view = QPlainTextEdit()
         self.log_view.setReadOnly(True)
-        self.log_view.setMaximumHeight(110)
+        self.log_view.setMaximumHeight(70)
         lay.addWidget(cap)
         lay.addWidget(self.log_view)
         return card
@@ -357,6 +362,7 @@ class ScoringView(QWidget):
 
         clock_card = QFrame(); clock_card.setObjectName("Card")
         cl = QVBoxLayout(clock_card); cl.setContentsMargins(22, 18, 22, 18); cl.setSpacing(6)
+        self.clock_card_layout = cl
         self.clock_caption = QLabel("TRIAL TIME"); self.clock_caption.setObjectName("Caption")
         self.clock_lbl = QLabel("00:00.00"); self.clock_lbl.setObjectName("Clock")
         self.clock_lbl.setAlignment(Qt.AlignCenter)
@@ -364,10 +370,19 @@ class ScoringView(QWidget):
         cl.addWidget(self.clock_lbl)
         sb.addWidget(clock_card)
 
-        self.objects_container = QVBoxLayout()
+        objects_content = QWidget()
+        objects_content.setObjectName("TransparentWidget")
+        self.objects_container = QVBoxLayout(objects_content)
+        self.objects_container.setContentsMargins(0, 0, 4, 0)
         self.objects_container.setSpacing(10)
-        sb.addLayout(self.objects_container)
-        sb.addStretch(1)
+        self.objects_scroll = QScrollArea()
+        self.objects_scroll.setObjectName("ObjectScroll")
+        self.objects_scroll.setWidgetResizable(True)
+        self.objects_scroll.setFrameShape(QFrame.NoFrame)
+        self.objects_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.objects_scroll.setWidget(objects_content)
+        self.objects_scroll.viewport().setObjectName("TransparentWidget")
+        sb.addWidget(self.objects_scroll, 1)
         sb.addLayout(self._make_controls(large=False))
 
         outer.addWidget(sidebar, 0)
@@ -382,6 +397,7 @@ class ScoringView(QWidget):
         # Big centered clock
         clock_card = QFrame(); clock_card.setObjectName("Card")
         cl = QVBoxLayout(clock_card); cl.setContentsMargins(40, 32, 40, 36); cl.setSpacing(10)
+        self.clock_card_layout = cl
         self.clock_caption = QLabel("TRIAL TIME"); self.clock_caption.setObjectName("Caption")
         self.clock_caption.setAlignment(Qt.AlignCenter)
         self.clock_lbl = QLabel("00:00.00"); self.clock_lbl.setObjectName("ClockBig")
@@ -395,9 +411,19 @@ class ScoringView(QWidget):
         objs_lay = QVBoxLayout(objs_card); objs_lay.setContentsMargins(28, 24, 28, 28); objs_lay.setSpacing(14)
         objs_cap = QLabel("OBJECTS"); objs_cap.setObjectName("Caption")
         objs_lay.addWidget(objs_cap, 0, Qt.AlignLeft)
-        self.objects_container = QGridLayout()
+        objects_content = QWidget()
+        objects_content.setObjectName("TransparentWidget")
+        self.objects_container = QGridLayout(objects_content)
+        self.objects_container.setContentsMargins(0, 0, 4, 0)
         self.objects_container.setSpacing(16)
-        objs_lay.addLayout(self.objects_container)
+        self.objects_scroll = QScrollArea()
+        self.objects_scroll.setObjectName("ObjectScroll")
+        self.objects_scroll.setWidgetResizable(True)
+        self.objects_scroll.setFrameShape(QFrame.NoFrame)
+        self.objects_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.objects_scroll.setWidget(objects_content)
+        self.objects_scroll.viewport().setObjectName("TransparentWidget")
+        objs_lay.addWidget(self.objects_scroll, 1)
         outer.addWidget(objs_card, 1)
 
         # Controls
@@ -438,7 +464,17 @@ class ScoringView(QWidget):
         # Rebuild object cards
         self._clear_object_cards()
         n = len(config.objects)
-        large = not has_video
+        # Keep the dramatic timer treatment for 1-3 objects. Larger trials use
+        # compact cards and clock typography so every timer gets useful space.
+        compact_no_video = not has_video and n >= 4
+        large = not has_video and not compact_no_video
+        if not has_video:
+            self.clock_lbl.setObjectName("Clock" if compact_no_video else "ClockBig")
+            self.clock_lbl.style().unpolish(self.clock_lbl)
+            self.clock_lbl.style().polish(self.clock_lbl)
+            if self.clock_card_layout is not None:
+                margins = (24, 14, 24, 16) if compact_no_video else (40, 32, 40, 36)
+                self.clock_card_layout.setContentsMargins(*margins)
         cols = _grid_cols(n) if isinstance(self.objects_container, QGridLayout) else 1
         for i, obj in enumerate(config.objects):
             card = ObjectCard(obj.name, obj.hotkey, large=large)

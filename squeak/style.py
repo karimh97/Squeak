@@ -378,6 +378,11 @@ QScrollBar::handle:vertical:hover {{ background: {p.text_3}; }}
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0px; }}
 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{ background: none; }}
 
+QScrollArea#ObjectScroll {{
+    background-color: transparent;
+    border: none;
+}}
+
 /* ---- Plain text ---- */
 
 QPlainTextEdit, QTextEdit {{
