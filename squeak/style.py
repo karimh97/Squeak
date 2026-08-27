@@ -22,6 +22,14 @@ QMainWindow, QWidget {{
     background-color: {p.bg};
 }}
 
+QLabel, QRadioButton, QCheckBox {{
+    background-color: transparent;
+}}
+
+QWidget#SectionBody, QWidget#TransparentWidget {{
+    background-color: transparent;
+}}
+
 /* ---- Typography ---- */
 
 QLabel#Brand {{
@@ -71,15 +79,21 @@ QLabel#FieldLabel {{
 
 QFrame#Card {{
     background-color: {p.surface};
-    border: 1px solid {p.border};
-    border-radius: 14px;
+    border: none;
+    border-radius: 8px;
+}}
+
+QLabel#SectionMarker {{
+    background-color: {p.accent};
+    border: none;
+    border-radius: 1px;
 }}
 
 QFrame#ObjectCard {{
     background-color: {p.surface};
     border: 1px solid {p.border};
     border-left: 3px solid {p.border};
-    border-radius: 12px;
+    border-radius: 8px;
 }}
 
 QFrame#ObjectCard[active="true"] {{
@@ -293,9 +307,9 @@ QPushButton#ThemeToggle:hover {{
 /* ---- Inputs ---- */
 
 QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {{
-    background-color: {p.surface};
+    background-color: {p.surface_2};
     border: 1px solid {p.border};
-    border-radius: 8px;
+    border-radius: 6px;
     padding: 8px 10px;
     selection-background-color: {p.accent};
     selection-color: {p.accent_text};
@@ -305,7 +319,7 @@ QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {{
 }}
 QLineEdit:disabled, QSpinBox:disabled {{
     color: {p.text_3};
-    background-color: {p.surface_2};
+    background-color: {p.bg};
 }}
 
 QComboBox::drop-down {{ border: none; width: 24px; }}

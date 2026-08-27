@@ -45,6 +45,7 @@ class CameraSelector(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setObjectName("TransparentWidget")
 
         self._media = QMediaDevices(self)
         self._media.videoInputsChanged.connect(self._refresh)
@@ -203,15 +204,24 @@ class TrialConfig:
 # ---------------------------------------------------------------------- helpers
 
 def _section(title: str, body: QWidget) -> QFrame:
-    """A captioned card. Cleaner than a QGroupBox."""
+    """A quiet, captioned setup panel."""
+    body.setObjectName("SectionBody")
     card = QFrame()
     card.setObjectName("Card")
     lay = QVBoxLayout(card)
-    lay.setContentsMargins(20, 18, 20, 18)
-    lay.setSpacing(14)
+    lay.setContentsMargins(20, 20, 20, 20)
+    lay.setSpacing(16)
+    title_row = QHBoxLayout()
+    title_row.setSpacing(8)
+    marker = QLabel()
+    marker.setObjectName("SectionMarker")
+    marker.setFixedSize(3, 12)
     cap = QLabel(title.upper())
     cap.setObjectName("Caption")
-    lay.addWidget(cap)
+    title_row.addWidget(marker)
+    title_row.addWidget(cap)
+    title_row.addStretch(1)
+    lay.addLayout(title_row)
     lay.addWidget(body)
     return card
 
@@ -223,6 +233,7 @@ class ObjectRow(QWidget):
 
     def __init__(self, name: str = "", hotkey: str = "", parent=None):
         super().__init__(parent)
+        self.setObjectName("TransparentWidget")
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
@@ -307,8 +318,14 @@ class SetupView(QWidget):
         chips_lay = QVBoxLayout(chips_card)
         chips_lay.setContentsMargins(20, 16, 20, 16)
         chips_lay.setSpacing(10)
+        chips_title = QHBoxLayout(); chips_title.setSpacing(8)
+        chips_marker = QLabel(); chips_marker.setObjectName("SectionMarker")
+        chips_marker.setFixedSize(3, 12)
         chips_cap = QLabel("TEMPLATE"); chips_cap.setObjectName("Caption")
-        chips_lay.addWidget(chips_cap)
+        chips_title.addWidget(chips_marker)
+        chips_title.addWidget(chips_cap)
+        chips_title.addStretch(1)
+        chips_lay.addLayout(chips_title)
         chip_row = QHBoxLayout()
         chip_row.setSpacing(8)
         for name in PRESETS.keys():
