@@ -412,9 +412,41 @@ QPlainTextEdit, QTextEdit {{
     padding: 8px;
 }}
 
-/* ---- Misc ---- */
+/* ---- Selection controls ---- */
 
-QRadioButton, QCheckBox {{ spacing: 8px; color: {p.text}; }}
+QRadioButton, QCheckBox {{
+    spacing: 10px;
+    padding: 5px 3px;
+    color: {p.text};
+}}
+QRadioButton:checked, QCheckBox:checked {{
+    font-weight: 600;
+}}
+
+QRadioButton::indicator, QCheckBox::indicator {{
+    width: 18px;
+    height: 18px;
+    background-color: {p.surface_2};
+    border: 2px solid {p.border_2};
+}}
+QRadioButton::indicator {{ border-radius: 10px; }}
+QCheckBox::indicator {{ border-radius: 4px; }}
+
+QRadioButton::indicator:hover, QCheckBox::indicator:hover {{
+    border-color: {p.accent};
+    background-color: {p.surface};
+}}
+QRadioButton::indicator:checked, QCheckBox::indicator:checked {{
+    background-color: {p.accent};
+    border-color: {p.accent};
+}}
+QRadioButton::indicator:disabled, QCheckBox::indicator:disabled {{
+    background-color: {p.bg};
+    border-color: {p.border};
+}}
+QRadioButton:disabled, QCheckBox:disabled {{ color: {p.text_3}; }}
+
+/* ---- Misc ---- */
 
 QToolTip {{
     background-color: {p.surface_2};
