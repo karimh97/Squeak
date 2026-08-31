@@ -415,7 +415,7 @@ QPlainTextEdit, QTextEdit {{
 /* ---- Selection controls ---- */
 
 QRadioButton, QCheckBox {{
-    spacing: 10px;
+    spacing: 8px;
     padding: 5px 3px;
     color: {p.text};
 }}
@@ -424,13 +424,13 @@ QRadioButton:checked, QCheckBox:checked {{
 }}
 
 QRadioButton::indicator, QCheckBox::indicator {{
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     background-color: {p.surface_2};
     border: 2px solid {p.border_2};
 }}
-QRadioButton::indicator {{ border-radius: 10px; }}
-QCheckBox::indicator {{ border-radius: 4px; }}
+QRadioButton::indicator {{ border-radius: 8px; }}
+QCheckBox::indicator {{ border-radius: 3px; }}
 
 QRadioButton::indicator:hover, QCheckBox::indicator:hover {{
     border-color: {p.accent};
