@@ -2,6 +2,7 @@
 # Or manually:  pyinstaller squeak.spec --noconfirm --clean
 
 from pathlib import Path
+from runpy import run_path
 import sys
 
 block_cipher = None
@@ -12,6 +13,7 @@ ICON_ICO = str(ROOT / "build_assets" / "icon.ico")
 IS_MAC = sys.platform == "darwin"
 IS_WINDOWS = sys.platform == "win32"
 APP_ICON = ICON_ICNS if IS_MAC else ICON_ICO if IS_WINDOWS else ICON_PNG
+APP_VERSION = run_path(str(ROOT / "squeak" / "__init__.py"))["__version__"]
 
 
 a = Analysis(
@@ -78,12 +80,12 @@ if IS_MAC:
         name="Squeak.app",
         icon=ICON_ICNS,
         bundle_identifier="science.squeak.app",
-        version="1.0.0",
+        version=APP_VERSION,
         info_plist={
             "CFBundleDisplayName": "Squeak",
             "CFBundleName": "Squeak",
-            "CFBundleShortVersionString": "1.0.0",
-            "CFBundleVersion": "1.0.0",
+            "CFBundleShortVersionString": APP_VERSION,
+            "CFBundleVersion": APP_VERSION,
             "LSMinimumSystemVersion": "11.0",
             "NSHighResolutionCapable": True,
             "NSCameraUsageDescription":

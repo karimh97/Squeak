@@ -36,6 +36,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from . import __version__
 from .branding import logo_pixmap
 from .scorer import Scorer
 from .setup_view import TrialConfig
@@ -654,6 +655,7 @@ class ScoringView(QWidget):
     def _build_meta(self) -> dict:
         c = self.config
         return {
+            "squeak_version": __version__,
             "animal_id": c.animal_id if c else "",
             "group": c.group if c else "",
             "session": c.session if c else "",
