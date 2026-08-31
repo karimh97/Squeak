@@ -208,6 +208,23 @@ QLabel#StatusText[state="paused"]    {{ color: {p.warning}; }}
 QLabel#StatusText[state="done"]      {{ color: {p.info}; }}
 QLabel#StatusText[state="ready"]     {{ color: {p.text_2}; }}
 
+QLabel#RecordingBadge {{
+    background-color: transparent;
+    border: 1px solid {p.border};
+    border-radius: 6px;
+    padding: 5px 9px;
+    color: {p.text_2};
+    font-size: 10px;
+    font-weight: 700;
+}}
+QLabel#RecordingBadge[state="recording"] {{
+    color: {p.danger};
+    border-color: {p.danger};
+}}
+QLabel#RecordingBadge[state="starting"] {{ color: {p.warning}; }}
+QLabel#RecordingBadge[state="saved"] {{ color: {p.success}; border-color: {p.success}; }}
+QLabel#RecordingBadge[state="error"] {{ color: {p.danger}; border-color: {p.danger}; }}
+
 /* ---- Video placeholder ---- */
 
 QLabel#VideoLabel {{

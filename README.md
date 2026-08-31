@@ -21,6 +21,9 @@ Squeak grew from direct experience with behavioural-neuroscience experiments: ma
 - **Configurable trial setup** — animal ID, group, session, experimenter, trial name, duration. Save presets for common phases (Sample / Reactivation / Test / Y-maze) or build a custom one.
 - **Any number of objects, any hotkeys** — every object is a label + a key, defined per trial.
 - **Live video input** — top-down USB webcam, pre-recorded video file, or no video (live observation through the lid).
+- **Synchronized camera recording** — optionally record a connected camera from
+  the instant the trial clock starts until the trial ends. Recordings continue
+  through scoring pauses and are linked from the exported CSV.
 - **Toggle-key scoring** — press to start a bout, press to stop. Space pauses the trial; pause auto-closes in-progress bouts so you can't inflate them.
 - **Auto-stop at trial duration**, or open-ended.
 - **Discrimination Index** computed live when exactly two objects are configured.
@@ -86,6 +89,11 @@ The test suite covers scoring state transitions, pause-adjusted timing, automati
 
 **2. Scoring.** Press **Start**. While the animal explores an object, press that object's hotkey — the card lights up and the timer runs. Press it again when the animal disengages. **Space** pauses; **Stop** ends the trial (the trial also auto-stops when the configured duration is reached).
 
+For a live camera trial, enable **Record camera video with trial** during setup.
+The start button changes to **Start + Record**, and a red REC indicator confirms
+that frames are being saved. Recording continues if scoring is paused so the
+behavioral record remains complete.
+
 **3. Results.** Inspect the per-object summary and Discrimination Index, then export. **Quick save** writes both a per-trial CSV and appends a row to a session-wide master CSV under `data/`.
 
 ---
@@ -104,6 +112,10 @@ Event log              (every start/stop, timestamped in seconds from trial star
 ```
 
 **Session master CSV** (`master_<session>.csv`) — one row per trial; columns expand as new object labels appear. Drop into pandas or Excel for group-level analysis.
+
+**Camera recordings** save to `Documents/Squeak Data/Videos` as MP4 files, with
+AVI used automatically if MP4 is unavailable on a computer. The filename and
+full path are stored in both CSV outputs.
 
 The Discrimination Index is computed as:
 

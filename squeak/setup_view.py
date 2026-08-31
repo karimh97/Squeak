@@ -199,6 +199,7 @@ class TrialConfig:
     duration_s: Optional[float]
     video_source: object        # int (cam index), str (file path), or None
     objects: list[ObjectConfig] = field(default_factory=list)
+    record_video: bool = False
 
 
 # ---------------------------------------------------------------------- helpers
@@ -405,6 +406,15 @@ class SetupView(QWidget):
         self.cam_selector = CameraSelector()
         cam_row.addWidget(self.cam_selector, 1)
 
+        record_row = QHBoxLayout()
+        record_row.addSpacing(24)
+        self.record_video_check = QCheckBox("Record camera video with trial")
+        self.record_video_check.setToolTip(
+            "Video starts with the scoring clock and saves to Documents/Squeak Data/Videos."
+        )
+        record_row.addWidget(self.record_video_check)
+        record_row.addStretch(1)
+
         file_row = QHBoxLayout()
         file_row.addSpacing(24)
         self.file_path_edit = QLineEdit()
@@ -415,6 +425,7 @@ class SetupView(QWidget):
 
         vid_lay.addWidget(self.radio_webcam)
         vid_lay.addLayout(cam_row)
+        vid_lay.addLayout(record_row)
         vid_lay.addWidget(self.radio_file)
         vid_lay.addLayout(file_row)
         vid_lay.addWidget(self.radio_none)
@@ -534,6 +545,7 @@ class SetupView(QWidget):
         on_cam = self.radio_webcam.isChecked()
         on_file = self.radio_file.isChecked()
         self.cam_selector.setEnabled(on_cam)
+        self.record_video_check.setEnabled(on_cam)
         self.file_path_edit.setEnabled(on_file)
 
     def _browse_video(self) -> None:
@@ -567,6 +579,7 @@ class SetupView(QWidget):
             "cam_mode": "index" if self.cam_selector.is_manual() else "named",
             "cam_index": self.cam_selector.value(),
             "cam_name": "" if self.cam_selector.is_manual() else self.cam_selector.display_name(),
+            "record_video": self.record_video_check.isChecked(),
             "file_path": self.file_path_edit.text(),
             "objects": [(o.name, o.hotkey) for o in self._collect_objects()],
         }
@@ -602,6 +615,7 @@ class SetupView(QWidget):
             index=int(data.get("cam_index", 0)),
             name=data.get("cam_name", ""),
         )
+        self.record_video_check.setChecked(bool(data.get("record_video", False)))
         self.file_path_edit.setText(data.get("file_path", ""))
         objs = data.get("objects")
         if objs:
@@ -651,6 +665,7 @@ class SetupView(QWidget):
             duration_s=duration,
             video_source=source,
             objects=objects,
+            record_video=(self.radio_webcam.isChecked() and self.record_video_check.isChecked()),
         )
         self._save_last_config()
         self.start_requested.emit(cfg)

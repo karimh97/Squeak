@@ -1,6 +1,9 @@
 """Live scoring screen — two layouts (video-on-left vs. no-video centered),
 animated recording dot, refined cards."""
 
+from datetime import datetime
+from pathlib import Path
+import re
 from typing import Optional
 
 from PySide6.QtCore import (
@@ -40,6 +43,9 @@ from .theme import manager as theme_manager
 from .video_source import VideoSource
 
 
+VIDEO_DIR = Path.home() / "Documents" / "Squeak Data" / "Videos"
+
+
 def _fmt_clock(secs: float) -> str:
     secs = max(0.0, secs)
     m = int(secs // 60)
@@ -62,6 +68,11 @@ def _grid_cols(n: int) -> int:
     if n <= 4: return 2          # 2x2 for 4
     if n <= 6: return 3          # 2x3 for 5-6
     return 4                     # 4 cols for 7+
+
+
+def _safe_filename_part(value: str, fallback: str) -> str:
+    cleaned = re.sub(r"[^A-Za-z0-9_-]+", "-", value.strip()).strip("-_")
+    return cleaned or fallback
 
 
 # ---------------------------------------------------------------------- widgets
@@ -215,6 +226,7 @@ class ScoringView(QWidget):
         self.object_cards: dict[str, ObjectCard] = {}
         self._shortcuts: list[QShortcut] = []
         self._has_video_mode: Optional[bool] = None
+        self.recording_path: Optional[Path] = None
 
         # Body-mode-specific widget refs (reassigned on mode change)
         self.video_label: Optional[VideoLabel] = None
@@ -274,6 +286,13 @@ class ScoringView(QWidget):
         status_box.addWidget(self.status_text)
         header.addLayout(status_box)
         header.addSpacing(8)
+
+        self.recording_badge = QLabel("● VIDEO ARMED")
+        self.recording_badge.setObjectName("RecordingBadge")
+        self.recording_badge.setProperty("state", "armed")
+        self.recording_badge.hide()
+        header.addWidget(self.recording_badge)
+        header.addSpacing(4)
 
         self.theme_btn = QPushButton(); self.theme_btn.setObjectName("ThemeToggle")
         self._refresh_theme_btn()
@@ -439,6 +458,7 @@ class ScoringView(QWidget):
     def load_trial(self, config: TrialConfig) -> None:
         self.config = config
         self.scorer = Scorer(objects=config.objects, duration=config.duration_s)
+        self.recording_path = None
 
         has_video = config.video_source is not None
         if has_video != self._has_video_mode:
@@ -507,6 +527,9 @@ class ScoringView(QWidget):
             self.video.frame_ready.connect(self.video_label.set_image)
             self.video.error.connect(self._on_video_error)
             self.video.ended.connect(lambda: self.video_label.set_placeholder("Video ended"))
+            self.video.recording_started.connect(self._on_recording_started)
+            self.video.recording_error.connect(self._on_recording_error)
+            self.video.recording_stopped.connect(self._on_recording_stopped)
             if self.video.is_file:
                 # A recording must stay at frame zero until the scoring clock starts.
                 self.video_label.set_placeholder("Video ready — press Start")
@@ -514,6 +537,10 @@ class ScoringView(QWidget):
                 self.video_label.set_placeholder("Could not open video source")
 
         # Reset controls
+        recording_armed = bool(config.record_video and has_video and not isinstance(config.video_source, str))
+        self.recording_badge.setVisible(recording_armed)
+        self._set_recording_badge("armed", "● VIDEO ARMED")
+        self.start_btn.setText("Start + Record  ●" if recording_armed else "Start  ▶")
         self.start_btn.setEnabled(True)
         self.pause_btn.setEnabled(False)
         self.pause_btn.setText("Pause")
@@ -543,6 +570,11 @@ class ScoringView(QWidget):
             if not self.video.start() and self.video_label is not None:
                 self.video_label.set_placeholder("Could not open video source")
         self.scorer.start()
+        if self.config and self.config.record_video and self.video is not None and not self.video.is_file:
+            self._set_recording_badge("starting", "● STARTING VIDEO")
+            self.recording_badge.show()
+            if not self.video.start_recording(self._suggested_video_path()):
+                self._set_recording_badge("error", "VIDEO NOT SAVING")
         self.tick_timer.start()
         self.start_btn.setEnabled(False)
         self.pause_btn.setEnabled(True)
@@ -598,6 +630,8 @@ class ScoringView(QWidget):
             self.clock_lbl.setText(_fmt_clock(t))
         for name, card in self.object_cards.items():
             card.update_values(self.scorer.time_for(name), self.scorer.bouts_for(name))
+        if self.video is not None and self.video.is_recording():
+            self.recording_badge.setText(f"● REC  {_fmt_clock(t)}")
         if self.scorer.is_complete() and not self.scorer.is_stopped():
             self._finish_trial(manual=False)
 
@@ -606,7 +640,11 @@ class ScoringView(QWidget):
         if self.scorer is None: return
         self.scorer.stop()
         self.tick_timer.stop()
-        if self.video is not None: self.video.stop()
+        if self.video is not None:
+            path = self.video.stop_recording()
+            if path is not None:
+                self.recording_path = path
+            self.video.stop()
         self.start_btn.setEnabled(False)
         self.pause_btn.setEnabled(False)
         self.stop_btn.setEnabled(False)
@@ -623,6 +661,8 @@ class ScoringView(QWidget):
             "session": c.session if c else "",
             "experimenter": c.experimenter if c else "",
             "trial_name": c.trial_name if c else "",
+            "video_file": str(self.recording_path) if self.recording_path else "",
+            "video_recorded": "yes" if self.recording_path else "no",
         }
 
     # ------------------------------------------------------------------
@@ -640,6 +680,37 @@ class ScoringView(QWidget):
         if self.video_label is not None:
             self.video_label.set_placeholder(msg)
 
+    def _suggested_video_path(self) -> Path:
+        c = self.config
+        animal = _safe_filename_part(c.animal_id if c else "", "animal")
+        trial = _safe_filename_part(c.trial_name if c else "", "trial")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        return VIDEO_DIR / f"{animal}_{trial}_{timestamp}.mp4"
+
+    def _set_recording_badge(self, state: str, text: str) -> None:
+        self.recording_badge.setText(text)
+        self.recording_badge.setProperty("state", state)
+        self.recording_badge.style().unpolish(self.recording_badge)
+        self.recording_badge.style().polish(self.recording_badge)
+
+    def _on_recording_started(self, path: str) -> None:
+        self.recording_path = Path(path)
+        self._set_recording_badge("recording", "● REC  00:00.00")
+        if self.scorer is not None:
+            self._append_log(self.scorer.now(), "video", f"recording started · {path}")
+
+    def _on_recording_error(self, message: str) -> None:
+        self.recording_path = None
+        self._set_recording_badge("error", "VIDEO NOT SAVING")
+        self.recording_badge.setToolTip(message)
+        if self.scorer is not None and self.scorer.is_started():
+            self._append_log(self.scorer.now(), "video", f"ERROR · {message}")
+
+    def _on_recording_stopped(self, path: str) -> None:
+        self.recording_path = Path(path)
+        self._set_recording_badge("saved", "VIDEO SAVED")
+        self.recording_badge.setToolTip(path)
+
     def _on_exit(self) -> None:
         if self.scorer is not None and self.scorer.is_started() and not self.scorer.is_stopped():
             ret = QMessageBox.question(
@@ -649,5 +720,9 @@ class ScoringView(QWidget):
             if ret != QMessageBox.Yes: return
             self.scorer.stop()
         self.tick_timer.stop()
-        if self.video is not None: self.video.stop()
+        if self.video is not None:
+            path = self.video.stop_recording()
+            if path is not None:
+                self.recording_path = path
+            self.video.stop()
         self.exit_requested.emit()

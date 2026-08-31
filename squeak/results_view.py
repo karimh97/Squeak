@@ -113,7 +113,11 @@ class ResultsView(QWidget):
         title_block = QVBoxLayout(); title_block.setSpacing(4)
         self.title = QLabel("Trial complete"); self.title.setObjectName("H1")
         self.subtitle = QLabel(""); self.subtitle.setObjectName("Subtle")
-        title_block.addWidget(self.title); title_block.addWidget(self.subtitle)
+        self.video_note = QLabel(""); self.video_note.setObjectName("Subtle")
+        self.video_note.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        title_block.addWidget(self.title)
+        title_block.addWidget(self.subtitle)
+        title_block.addWidget(self.video_note)
         root.addLayout(title_block)
 
         # --- KPI row ---
@@ -177,6 +181,9 @@ class ResultsView(QWidget):
         if meta.get("session"): bits.append(f"Session {meta['session']}")
         if meta.get("group"): bits.append(meta["group"])
         self.subtitle.setText("  ·  ".join(bits))
+        video_path = meta.get("video_file", "")
+        self.video_note.setText(f"Video saved: {video_path}" if video_path else "")
+        self.video_note.setVisible(bool(video_path))
 
         stats = scorer.stats()
         total = sum(s.total_time for s in stats)
@@ -265,5 +272,6 @@ class ResultsView(QWidget):
             QMessageBox.critical(self, "Save failed", str(e)); return
         QMessageBox.information(
             self, "Saved",
-            f"Per-trial CSV:\n  {trial_path}\n\nMaster CSV:\n  {master_path}",
+            f"Per-trial CSV:\n  {trial_path}\n\nMaster CSV:\n  {master_path}"
+            + (f"\n\nVideo:\n  {self.meta['video_file']}" if self.meta.get("video_file") else ""),
         )
