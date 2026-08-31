@@ -25,7 +25,7 @@ jobs:
       - name: Install test dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --yes libegl1
+          sudo apt-get install --yes libegl1 libpulse0
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
