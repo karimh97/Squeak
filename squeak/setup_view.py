@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 
 from .branding import logo_pixmap
 from .scorer import ObjectConfig
+from .storage import DEFAULT_DATA_DIR
 from .theme import manager as theme_manager
 
 
@@ -200,6 +201,7 @@ class TrialConfig:
     video_source: object        # int (cam index), str (file path), or None
     objects: list[ObjectConfig] = field(default_factory=list)
     record_video: bool = False
+    data_dir: Path = field(default_factory=lambda: DEFAULT_DATA_DIR)
 
 
 # ---------------------------------------------------------------------- helpers
@@ -389,6 +391,21 @@ class SetupView(QWidget):
         dur_lay.addLayout(dur_row)
         dur_lay.addWidget(self.open_ended_check)
         left.addWidget(_section("Trial duration", dur_body))
+
+        # Data location
+        data_body = QWidget()
+        data_lay = QHBoxLayout(data_body)
+        data_lay.setContentsMargins(0, 0, 0, 0)
+        data_lay.setSpacing(10)
+        self.data_dir_edit = QLineEdit(str(DEFAULT_DATA_DIR))
+        self.data_dir_edit.setReadOnly(True)
+        self.data_dir_edit.setToolTip("Folder used for CSV files and camera recordings")
+        data_browse_btn = QPushButton("Choose folder…")
+        data_browse_btn.setCursor(Qt.PointingHandCursor)
+        data_browse_btn.clicked.connect(self._browse_data_dir)
+        data_lay.addWidget(self.data_dir_edit, 1)
+        data_lay.addWidget(data_browse_btn)
+        left.addWidget(_section("Data location", data_body))
         left.addStretch(1)
 
         # Video source
@@ -410,7 +427,7 @@ class SetupView(QWidget):
         record_row.addSpacing(24)
         self.record_video_check = QCheckBox("Record camera video with trial")
         self.record_video_check.setToolTip(
-            "Video starts with the scoring clock and saves to Documents/Squeak Data/Videos."
+            "Video starts with the scoring clock and saves in the selected data folder."
         )
         record_row.addWidget(self.record_video_check)
         record_row.addStretch(1)
@@ -557,6 +574,13 @@ class SetupView(QWidget):
             self.file_path_edit.setText(path)
             self.radio_file.setChecked(True)
 
+    def _browse_data_dir(self) -> None:
+        current = Path(self.data_dir_edit.text()).expanduser()
+        start = current if current.is_dir() else Path.home()
+        path = QFileDialog.getExistingDirectory(self, "Choose data folder", str(start))
+        if path:
+            self.data_dir_edit.setText(str(Path(path)))
+
     def _toggle_duration_inputs(self, open_ended: bool) -> None:
         self.minutes_spin.setEnabled(not open_ended)
         self.seconds_spin.setEnabled(not open_ended)
@@ -581,6 +605,7 @@ class SetupView(QWidget):
             "cam_name": "" if self.cam_selector.is_manual() else self.cam_selector.display_name(),
             "record_video": self.record_video_check.isChecked(),
             "file_path": self.file_path_edit.text(),
+            "data_dir": self.data_dir_edit.text(),
             "objects": [(o.name, o.hotkey) for o in self._collect_objects()],
         }
 
@@ -617,6 +642,7 @@ class SetupView(QWidget):
         )
         self.record_video_check.setChecked(bool(data.get("record_video", False)))
         self.file_path_edit.setText(data.get("file_path", ""))
+        self.data_dir_edit.setText(data.get("data_dir") or str(DEFAULT_DATA_DIR))
         objs = data.get("objects")
         if objs:
             self._clear_object_rows()
@@ -666,6 +692,7 @@ class SetupView(QWidget):
             video_source=source,
             objects=objects,
             record_video=(self.radio_webcam.isChecked() and self.record_video_check.isChecked()),
+            data_dir=Path(self.data_dir_edit.text()).expanduser(),
         )
         self._save_last_config()
         self.start_requested.emit(cfg)

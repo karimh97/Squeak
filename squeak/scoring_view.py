@@ -39,11 +39,9 @@ from PySide6.QtWidgets import (
 from .branding import logo_pixmap
 from .scorer import Scorer
 from .setup_view import TrialConfig
+from .storage import DEFAULT_DATA_DIR
 from .theme import manager as theme_manager
 from .video_source import VideoSource
-
-
-VIDEO_DIR = Path.home() / "Documents" / "Squeak Data" / "Videos"
 
 
 def _fmt_clock(secs: float) -> str:
@@ -663,6 +661,7 @@ class ScoringView(QWidget):
             "trial_name": c.trial_name if c else "",
             "video_file": str(self.recording_path) if self.recording_path else "",
             "video_recorded": "yes" if self.recording_path else "no",
+            "data_directory": str(c.data_dir if c else DEFAULT_DATA_DIR),
         }
 
     # ------------------------------------------------------------------
@@ -685,7 +684,8 @@ class ScoringView(QWidget):
         animal = _safe_filename_part(c.animal_id if c else "", "animal")
         trial = _safe_filename_part(c.trial_name if c else "", "trial")
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return VIDEO_DIR / f"{animal}_{trial}_{timestamp}.mp4"
+        data_dir = c.data_dir if c else DEFAULT_DATA_DIR
+        return data_dir / "Videos" / f"{animal}_{trial}_{timestamp}.mp4"
 
     def _set_recording_badge(self, state: str, text: str) -> None:
         self.recording_badge.setText(text)

@@ -81,7 +81,7 @@ The test suite covers scoring state transitions, pause-adjusted timing, automati
 
 ## Using the app
 
-**1. Setup.** Pick a template or fill in the form. Add or remove objects on the right; each row is a label and a one-character hotkey.
+**1. Setup.** Pick a template or fill in the form. Add or remove objects on the right; each row is a label and a one-character hotkey. Use **Data location** to choose where Squeak saves the experiment files. The selected folder is remembered between launches.
 
 <p align="center">
   <img src="docs/squeak-setup.png" alt="Squeak trial setup screen with templates, study metadata, video source, duration, and objects" width="100%">
@@ -94,13 +94,13 @@ The start button changes to **Start + Record**, and a red REC indicator confirms
 that frames are being saved. Recording continues if scoring is paused so the
 behavioral record remains complete.
 
-**3. Results.** Inspect the per-object summary and Discrimination Index, then export. **Quick save** writes both a per-trial CSV and appends a row to a session-wide master CSV under `data/`.
+**3. Results.** Inspect the per-object summary and Discrimination Index, then export. **Quick save** writes both a per-trial CSV and appends a row to a session-wide master CSV in the selected data folder.
 
 ---
 
 ## Outputs
 
-By default everything saves to `Documents/Squeak Data`. Two files per session:
+By default everything saves to `Documents/Squeak Data`. You can choose another folder in **Data location** during setup. Two files per session:
 
 **Per-trial CSV** (`M001_Test_20260515_161716.csv`):
 
@@ -113,7 +113,7 @@ Event log              (every start/stop, timestamped in seconds from trial star
 
 **Session master CSV** (`master_<session>.csv`) — one row per trial; columns expand as new object labels appear. Drop into pandas or Excel for group-level analysis.
 
-**Camera recordings** save to `Documents/Squeak Data/Videos` as MP4 files, with
+**Camera recordings** save to the `Videos` subfolder inside the selected data folder as MP4 files, with
 AVI used automatically if MP4 is unavailable on a computer. The filename and
 full path are stored in both CSV outputs.
 
