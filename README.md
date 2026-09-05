@@ -44,6 +44,9 @@ on the [Releases page](https://github.com/karimh97/Squeak/releases).
 - **CSV outputs**: a detailed per-trial file (metadata + summary + DI + full event log with timestamps) and an append-only session master sheet.
 - **Configuration persists** across launches.
 - **Playback stays synchronized** — pre-recorded video starts with the scoring clock and pauses or resumes with the trial.
+- **Optional update notifications** — Squeak checks GitHub Releases in the
+  background and offers to open the download page when a newer stable version is
+  available. Updates are never installed silently or forced during an experiment.
 
 ---
 
@@ -152,6 +155,7 @@ DI = (Object_B − Object_A) / (Object_B + Object_A)
 │   ├── scorer.py           # scoring engine (state machine + bouts + DI)
 │   ├── video_source.py     # OpenCV camera / file wrapper
 │   ├── exporter.py         # CSV writers
+│   ├── update_checker.py   # non-blocking GitHub release checks
 │   ├── icon.py             # app icon generator
 │   └── style.py            # theme (QSS + palette constants)
 ├── build_assets/           # generated PNG / .icns
@@ -168,7 +172,7 @@ If you use Squeak in your research, analysis, presentation, or publication,
 please cite Squeak and its author, **Karim Abouelnaga**:
 
 > Abouelnaga, K. (2026). *Squeak: A desktop app for manual scoring of rodent
-> object exploration* (Version 1.0.0) [Computer software]. GitHub.
+> object exploration* (Version 1.1.0) [Computer software]. GitHub.
 > https://github.com/karimh97/Squeak
 
 The repository also includes [`CITATION.cff`](CITATION.cff), which powers
