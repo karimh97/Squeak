@@ -37,9 +37,15 @@ After the first launch, open Squeak normally from Applications or Spotlight.
 
 ## Install an update
 
-Return to the [latest release page](https://github.com/karimh97/Squeak/releases/latest)
-and install the new package using the same steps. On macOS, replace the old app
-in Applications. On Windows, replace the old extracted Squeak folder.
+Squeak 1.1.0 and later checks for new stable releases after launch. When an
+update is available, choose **View release** to open the official download page,
+**Remind me later**, or **Skip this version**. You can also select **Help > Check
+for Updates** at any time.
+
+Download and install the new package using the same steps. On macOS, replace the
+old app in Applications. On Windows, replace the old extracted Squeak folder.
+Squeak never installs an update silently or forces an update during an active
+experiment.
 
 Updating the app does not remove experiment files or preferences. Squeak stores
 those separately in the data folder selected during trial setup.
