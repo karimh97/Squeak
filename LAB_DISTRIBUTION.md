@@ -1,15 +1,10 @@
-# Distributing Squeak to the lab
+# Maintainer release guide
 
 Lab members should use the links in [INSTALL.md](INSTALL.md). They do not need
-Python, the source code, or a GitHub account when the repository is public.
+Python, the source code, or a GitHub account. The remaining instructions on this
+page are for project maintainers publishing a new version.
 
-## One-time repository setup
-
-The repository must be public for people without GitHub accounts to download
-release files. In GitHub, check **Settings > General > Danger Zone > Change
-repository visibility**.
-
-Unsigned packages are appropriate for internal testing but produce security
+Unsigned packages are appropriate for early lab evaluation but produce security
 warnings. Before broad public distribution, sign and notarize the macOS app and
 sign the Windows executable.
 
