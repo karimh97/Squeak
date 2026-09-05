@@ -10,6 +10,20 @@ Toggle a hotkey when the animal starts exploring an object; press it again when 
 
 Squeak grew from direct experience with behavioural-neuroscience experiments: manual scoring needed to be flexible enough for different trial phases and object configurations, while still producing consistent, analysis-ready records. It turns that lab workflow into a reusable tool that other researchers can run without writing code.
 
+## Download Squeak
+
+No Python or GitHub account is required. Choose the package for your computer:
+
+| Computer | Download |
+| --- | --- |
+| Mac with an Apple M-series chip | [Download for Apple Silicon](https://github.com/karimh97/Squeak/releases/latest/download/Squeak-macOS-Apple-Silicon.zip) |
+| Older Mac with an Intel processor | [Download for Intel Mac](https://github.com/karimh97/Squeak/releases/latest/download/Squeak-macOS-Intel.zip) |
+| Windows 10 or 11 | [Download for Windows](https://github.com/karimh97/Squeak/releases/latest/download/Squeak-Windows.zip) |
+
+See [Install Squeak](INSTALL.md) for step-by-step installation, first-launch
+security guidance, and update instructions. All published versions are listed
+on the [Releases page](https://github.com/karimh97/Squeak/releases).
+
 <p align="center">
   <img src="docs/squeak-scoring.png" alt="Squeak live scoring screen with trial clock, object timers, bout counts, controls, and event log" width="100%">
 </p>
@@ -21,6 +35,9 @@ Squeak grew from direct experience with behavioural-neuroscience experiments: ma
 - **Configurable trial setup** — animal ID, group, session, experimenter, trial name, duration. Save presets for common phases (Sample / Reactivation / Test / Y-maze) or build a custom one.
 - **Any number of objects, any hotkeys** — every object is a label + a key, defined per trial.
 - **Live video input** — top-down USB webcam, pre-recorded video file, or no video (live observation through the lid).
+- **Synchronized camera recording** — optionally record a connected camera from
+  the instant the trial clock starts until the trial ends. Recordings continue
+  through scoring pauses and are linked from the exported CSV.
 - **Toggle-key scoring** — press to start a bout, press to stop. Space pauses the trial; pause auto-closes in-progress bouts so you can't inflate them.
 - **Auto-stop at trial duration**, or open-ended.
 - **Discrimination Index** computed live when exactly two objects are configured.
@@ -30,16 +47,9 @@ Squeak grew from direct experience with behavioural-neuroscience experiments: ma
 
 ---
 
-## Quick start
+## Development
 
-### For lab members — download the app
-
-Lab members should download the appropriate package from the repository's
-**Releases** page. They do not need Python and should not clone the source code.
-See [LAB_DISTRIBUTION.md](LAB_DISTRIBUTION.md) for installation instructions,
-security-warning guidance, and the maintainer release process.
-
-### Option A — run from source (development)
+### Run from source
 
 ```bash
 cd Squeak
@@ -48,7 +58,7 @@ cd Squeak
 
 First launch installs dependencies into a local `.venv/` (PySide6, OpenCV, NumPy). Subsequent launches are instant.
 
-### Option B — build a standalone double-clickable app
+### Build a standalone double-clickable app
 
 ```bash
 ./build_app.sh
@@ -78,7 +88,7 @@ The test suite covers scoring state transitions, pause-adjusted timing, automati
 
 ## Using the app
 
-**1. Setup.** Pick a template or fill in the form. Add or remove objects on the right; each row is a label and a one-character hotkey.
+**1. Setup.** Pick a template or fill in the form. Add or remove objects on the right; each row is a label and a one-character hotkey. Use **Data location** to choose where Squeak saves the experiment files. The selected folder is remembered between launches.
 
 <p align="center">
   <img src="docs/squeak-setup.png" alt="Squeak trial setup screen with templates, study metadata, video source, duration, and objects" width="100%">
@@ -86,13 +96,18 @@ The test suite covers scoring state transitions, pause-adjusted timing, automati
 
 **2. Scoring.** Press **Start**. While the animal explores an object, press that object's hotkey — the card lights up and the timer runs. Press it again when the animal disengages. **Space** pauses; **Stop** ends the trial (the trial also auto-stops when the configured duration is reached).
 
-**3. Results.** Inspect the per-object summary and Discrimination Index, then export. **Quick save** writes both a per-trial CSV and appends a row to a session-wide master CSV under `data/`.
+For a live camera trial, enable **Record camera video with trial** during setup.
+The start button changes to **Start + Record**, and a red REC indicator confirms
+that frames are being saved. Recording continues if scoring is paused so the
+behavioral record remains complete.
+
+**3. Results.** Inspect the per-object summary and Discrimination Index, then export. **Quick save** writes both a per-trial CSV and appends a row to a session-wide master CSV in the selected data folder.
 
 ---
 
 ## Outputs
 
-By default everything saves to `Documents/Squeak Data`. Two files per session:
+By default everything saves to `Documents/Squeak Data`. You can choose another folder in **Data location** during setup. Two files per session:
 
 **Per-trial CSV** (`M001_Test_20260515_161716.csv`):
 
@@ -104,6 +119,10 @@ Event log              (every start/stop, timestamped in seconds from trial star
 ```
 
 **Session master CSV** (`master_<session>.csv`) — one row per trial; columns expand as new object labels appear. Drop into pandas or Excel for group-level analysis.
+
+**Camera recordings** save to the `Videos` subfolder inside the selected data folder as MP4 files, with
+AVI used automatically if MP4 is unavailable on a computer. The filename and
+full path are stored in both CSV outputs.
 
 The Discrimination Index is computed as:
 

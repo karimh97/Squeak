@@ -22,10 +22,8 @@ from PySide6.QtWidgets import (
 from .branding import logo_pixmap
 from .exporter import append_to_master, export_trial
 from .scorer import Scorer
+from .storage import DEFAULT_DATA_DIR
 from .theme import manager as theme_manager
-
-
-DATA_DIR = Path.home() / "Documents" / "Squeak Data"
 
 
 def _fmt_clock(secs: float) -> str:
@@ -113,7 +111,11 @@ class ResultsView(QWidget):
         title_block = QVBoxLayout(); title_block.setSpacing(4)
         self.title = QLabel("Trial complete"); self.title.setObjectName("H1")
         self.subtitle = QLabel(""); self.subtitle.setObjectName("Subtle")
-        title_block.addWidget(self.title); title_block.addWidget(self.subtitle)
+        self.video_note = QLabel(""); self.video_note.setObjectName("Subtle")
+        self.video_note.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        title_block.addWidget(self.title)
+        title_block.addWidget(self.subtitle)
+        title_block.addWidget(self.video_note)
         root.addLayout(title_block)
 
         # --- KPI row ---
@@ -177,6 +179,9 @@ class ResultsView(QWidget):
         if meta.get("session"): bits.append(f"Session {meta['session']}")
         if meta.get("group"): bits.append(meta["group"])
         self.subtitle.setText("  ·  ".join(bits))
+        video_path = meta.get("video_file", "")
+        self.video_note.setText(f"Video saved: {video_path}" if video_path else "")
+        self.video_note.setVisible(bool(video_path))
 
         stats = scorer.stats()
         total = sum(s.total_time for s in stats)
@@ -217,6 +222,22 @@ class ResultsView(QWidget):
     # ------------------------------------------------------------------
     # Exports
     # ------------------------------------------------------------------
+    def _data_dir(self) -> Path:
+        return Path(self.meta.get("data_directory") or DEFAULT_DATA_DIR).expanduser()
+
+    def _prepare_data_dir(self) -> Optional[Path]:
+        data_dir = self._data_dir()
+        try:
+            data_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            QMessageBox.critical(
+                self,
+                "Save location unavailable",
+                f"Squeak could not use the selected data folder:\n{data_dir}\n\n{exc}",
+            )
+            return None
+        return data_dir
+
     def _suggested_filename(self) -> str:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         bits = [self.meta.get("animal_id", ""), self.meta.get("trial_name", ""), ts]
@@ -229,8 +250,9 @@ class ResultsView(QWidget):
 
     def _on_save_csv(self) -> None:
         if self.scorer is None: return
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        default = str(DATA_DIR / self._suggested_filename())
+        data_dir = self._prepare_data_dir()
+        if data_dir is None: return
+        default = str(data_dir / self._suggested_filename())
         path, _ = QFileDialog.getSaveFileName(self, "Save trial CSV", default, "CSV (*.csv)")
         if not path: return
         try:
@@ -241,8 +263,9 @@ class ResultsView(QWidget):
 
     def _on_append_master(self) -> None:
         if self.scorer is None: return
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        default = str(DATA_DIR / self._suggested_master_name())
+        data_dir = self._prepare_data_dir()
+        if data_dir is None: return
+        default = str(data_dir / self._suggested_master_name())
         path, _ = QFileDialog.getSaveFileName(
             self, "Append to / create session master CSV", default, "CSV (*.csv)"
         )
@@ -255,9 +278,10 @@ class ResultsView(QWidget):
 
     def _on_quick_save(self) -> None:
         if self.scorer is None: return
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
-        trial_path = DATA_DIR / self._suggested_filename()
-        master_path = DATA_DIR / self._suggested_master_name()
+        data_dir = self._prepare_data_dir()
+        if data_dir is None: return
+        trial_path = data_dir / self._suggested_filename()
+        master_path = data_dir / self._suggested_master_name()
         try:
             export_trial(trial_path, self.meta, self.scorer)
             append_to_master(master_path, self.meta, self.scorer)
@@ -265,5 +289,6 @@ class ResultsView(QWidget):
             QMessageBox.critical(self, "Save failed", str(e)); return
         QMessageBox.information(
             self, "Saved",
-            f"Per-trial CSV:\n  {trial_path}\n\nMaster CSV:\n  {master_path}",
+            f"Per-trial CSV:\n  {trial_path}\n\nMaster CSV:\n  {master_path}"
+            + (f"\n\nVideo:\n  {self.meta['video_file']}" if self.meta.get("video_file") else ""),
         )

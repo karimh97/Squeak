@@ -10,7 +10,41 @@ permissions:
   contents: write
 
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libegl1 libpulse0
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Confirm tag matches app version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          APP_VERSION="$(python -c 'from squeak import __version__; print(__version__)')"
+          test "v${APP_VERSION}" = "${GITHUB_REF_NAME}" || {
+            echo "Tag ${GITHUB_REF_NAME} does not match app version v${APP_VERSION}."
+            exit 1
+          }
+
+      - name: Compile and test
+        run: |
+          python -m compileall -q app.py squeak
+          python -m unittest discover -s tests -v
+
   build:
+    needs: validate
     strategy:
       fail-fast: false
       matrix:
@@ -24,9 +58,9 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
@@ -50,10 +84,36 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}
+          compression-level: 0
 
-      - name: Attach files to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download completed app packages
+        uses: actions/download-artifact@v5
         with:
-          files: ${{ matrix.artifact }}
-          generate_release_notes: true
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create checksums
+        working-directory: release-assets
+        run: sha256sum *.zip > SHA256SUMS.txt
+
+      - name: Publish GitHub Release
+        run: |
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" release-assets/* --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" release-assets/* \
+              --verify-tag \
+              --latest \
+              --title "Squeak ${GITHUB_REF_NAME}" \
+              --generate-notes \
+              --notes "$(cat .github/release-intro.md)"
+          fi

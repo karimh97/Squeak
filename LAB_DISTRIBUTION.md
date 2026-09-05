@@ -1,66 +1,49 @@
-# Distributing Squeak to the lab
+# Maintainer release guide
 
-Lab members should not install Python or build Squeak themselves. Give them the
-appropriate download from the repository's **Releases** page.
+Lab members should use the links in [INSTALL.md](INSTALL.md). They do not need
+Python, the source code, or a GitHub account. The remaining instructions on this
+page are for project maintainers publishing a new version.
 
-## One-time repository setup
+Unsigned packages are appropriate for early lab evaluation but produce security
+warnings. Before broad public distribution, sign and notarize the macOS app and
+sign the Windows executable.
 
-The repository is currently private. Either:
+## Publish the first release
 
-1. Keep it private and add each lab member under **Settings > Collaborators**.
-   They will need a GitHub account and must sign in to download releases.
-2. Make it public. Anyone with the release link can download Squeak. This is the
-   recommended final state for an open-source publication.
-
-## Create a release
-
-1. Confirm the app works locally and all intended changes are on `main`.
-2. Open the repository's **Releases** page.
-3. Choose **Draft a new release**.
-4. Create a new tag such as `v0.1.0` and publish the release.
-5. GitHub automatically builds and attaches:
-   - `Squeak-macOS-Apple-Silicon.zip` (M1/M2/M3/M4/M5 Macs)
-   - `Squeak-macOS-Intel.zip` (older Intel Macs)
+1. Merge all intended changes into `main` and confirm the tests pass.
+2. Confirm `squeak/__init__.py` contains `__version__ = "1.0.0"`.
+3. Open the repository's **Releases** page and select **Draft a new release**.
+4. Choose **Create new tag**, enter `v1.0.0`, and target `main`.
+5. Select **Generate release notes**, then **Publish release**.
+6. The release workflow tests Squeak and attaches three packages automatically:
+   - `Squeak-macOS-Apple-Silicon.zip`
+   - `Squeak-macOS-Intel.zip`
    - `Squeak-Windows.zip`
+7. Wait for **Actions > Build release apps** to finish before sharing the release.
 
-Builds can also be tested without publishing a release from **Actions > Build
-release apps > Run workflow**. Those downloads expire, while release downloads
-remain available.
+The release also includes `SHA256SUMS.txt`, which can be used to verify that a
+download has not changed.
 
-## Instructions for lab members
+## Publish a later update
 
-### macOS
+1. Merge the update into `main`.
+2. Increase `__version__` in `squeak/__init__.py`, for example from `1.0.0` to
+   `1.0.1`. Update `CITATION.cff` when publishing a citable version.
+3. Create and publish a matching release tag, such as `v1.0.1`.
+4. Wait for all three packages to appear under the release's **Assets** section.
 
-1. Download and unzip the Apple Silicon package for M-series Macs, or the Intel
-   package for older Macs. Choose **About This Mac** from the Apple menu if the
-   processor type is unknown.
-2. Drag `Squeak.app` into Applications.
-3. On the first launch, macOS may block the unsigned app. Control-click Squeak,
-   choose **Open**, then choose **Open** again. Camera permission is requested
-   only when a camera trial is used.
+The workflow stops with an error if the tag and app version do not match. This
+prevents a package labeled `v1.0.1` from accidentally containing another app
+version.
 
-### Windows
+## Test packages without publishing
 
-1. Download and unzip `Squeak-Windows.zip`.
-2. Keep the entire extracted `Squeak` folder together.
-3. Open the folder and double-click `Squeak.exe`.
-4. Windows SmartScreen may warn about the unsigned app. Choose **More info > Run
-   anyway** only when the file came from the official Squeak release page.
+Open **Actions > Build release apps > Run workflow**. GitHub builds the same
+three packages and keeps them as temporary workflow artifacts without creating
+a public release.
 
-## Data location
+## Data and updates
 
-Quick Save writes files to `Documents/Squeak Data` on each computer. Researchers
-can also choose a different location when using the explicit export buttons.
-
-## Signing recommendation
-
-Unsigned packages are suitable for a small internal pilot but cause security
-warnings. Before broad public distribution:
-
-- macOS: enroll in the Apple Developer Program, sign with a Developer ID
-  Application certificate, and notarize the app.
-- Windows: obtain an Authenticode code-signing certificate and sign the
-  executable/package.
-
-Signing changes how operating systems trust the download; it does not change
-Squeak's scoring behavior.
+Replacing Squeak does not remove research data or settings. They are stored
+separately from the app. Every exported CSV records the Squeak version used for
+that trial so analyses remain reproducible after an update.

@@ -208,6 +208,23 @@ QLabel#StatusText[state="paused"]    {{ color: {p.warning}; }}
 QLabel#StatusText[state="done"]      {{ color: {p.info}; }}
 QLabel#StatusText[state="ready"]     {{ color: {p.text_2}; }}
 
+QLabel#RecordingBadge {{
+    background-color: transparent;
+    border: 1px solid {p.border};
+    border-radius: 6px;
+    padding: 5px 9px;
+    color: {p.text_2};
+    font-size: 10px;
+    font-weight: 700;
+}}
+QLabel#RecordingBadge[state="recording"] {{
+    color: {p.danger};
+    border-color: {p.danger};
+}}
+QLabel#RecordingBadge[state="starting"] {{ color: {p.warning}; }}
+QLabel#RecordingBadge[state="saved"] {{ color: {p.success}; border-color: {p.success}; }}
+QLabel#RecordingBadge[state="error"] {{ color: {p.danger}; border-color: {p.danger}; }}
+
 /* ---- Video placeholder ---- */
 
 QLabel#VideoLabel {{
@@ -395,9 +412,41 @@ QPlainTextEdit, QTextEdit {{
     padding: 8px;
 }}
 
-/* ---- Misc ---- */
+/* ---- Selection controls ---- */
 
-QRadioButton, QCheckBox {{ spacing: 8px; color: {p.text}; }}
+QRadioButton, QCheckBox {{
+    spacing: 8px;
+    padding: 5px 3px;
+    color: {p.text};
+}}
+QRadioButton:checked, QCheckBox:checked {{
+    font-weight: 600;
+}}
+
+QRadioButton::indicator, QCheckBox::indicator {{
+    width: 14px;
+    height: 14px;
+    background-color: {p.surface_2};
+    border: 2px solid {p.border_2};
+}}
+QRadioButton::indicator {{ border-radius: 8px; }}
+QCheckBox::indicator {{ border-radius: 3px; }}
+
+QRadioButton::indicator:hover, QCheckBox::indicator:hover {{
+    border-color: {p.accent};
+    background-color: {p.surface};
+}}
+QRadioButton::indicator:checked, QCheckBox::indicator:checked {{
+    background-color: {p.accent};
+    border-color: {p.accent};
+}}
+QRadioButton::indicator:disabled, QCheckBox::indicator:disabled {{
+    background-color: {p.bg};
+    border-color: {p.border};
+}}
+QRadioButton:disabled, QCheckBox:disabled {{ color: {p.text_3}; }}
+
+/* ---- Misc ---- */
 
 QToolTip {{
     background-color: {p.surface_2};

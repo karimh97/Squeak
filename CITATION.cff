@@ -12,7 +12,7 @@ abstract: >
   outputs and aggregated session sheets, including the Discrimination Index.
 type: software
 version: "1.0.0"
-date-released: "2026-05-15"
+date-released: "2026-08-31"
 license: MIT
 authors:
   - family-names: "Abouelnaga"
